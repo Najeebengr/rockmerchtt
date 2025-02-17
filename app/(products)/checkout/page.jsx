@@ -26,7 +26,7 @@ export default function page() {
               <i className="icon-arrRight" />
             </li>
             <li>
-              <Link className="link" href={`/shop-default-grid`}>
+              <Link className="link" href={`/shop-left-sidebar`}>
                 Shop
               </Link>
             </li>

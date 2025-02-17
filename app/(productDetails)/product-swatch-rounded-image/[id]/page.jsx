@@ -5,7 +5,6 @@ import Breadcumb from "@/components/productDetails/Breadcumb";
 import Descriptions1 from "@/components/productDetails/descriptions/Descriptions1";
 import DetailsColorRoundedImage from "@/components/productDetails/details/DetailsColorRoundedImage";
 
-import DetailsRoundedColor from "@/components/productDetails/details/DetailsRoundedColor";
 import RelatedProducts from "@/components/productDetails/RelatedProducts";
 import { allProducts } from "@/data/products";
 import React from "react";

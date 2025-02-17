@@ -1,7 +1,6 @@
 import Footer1 from "@/components/footers/Footer1";
 import Header1 from "@/components/headers/Header1";
 import Topbar6 from "@/components/headers/Topbar6";
-import Login from "@/components/otherPages/Login";
 import OrderTrac from "@/components/otherPages/OrderTrac";
 import Link from "next/link";
 import React from "react";
@@ -35,7 +34,7 @@ export default function page() {
                   <i className="icon-arrRight" />
                 </li>
                 <li>
-                  <Link className="link" href={`/shop-default-grid`}>
+                  <Link className="link" href={`/shop-left-sidebar`}>
                     Shop
                   </Link>
                 </li>

@@ -58,15 +58,15 @@ export default function SearchProducts() {
               </form>
               <div className="tf-col-quicklink">
                 <span className="title">Quick link:</span>
-                <Link className="link" href={`/shop-default-grid`}>
+                <Link className="link" href={`/shop-left-sidebar`}>
                   Fashion
                 </Link>
                 ,
-                <Link className="link" href={`/shop-default-grid`}>
+                <Link className="link" href={`/shop-left-sidebar`}>
                   Men
                 </Link>
                 ,
-                <Link className="link" href={`/shop-default-grid`}>
+                <Link className="link" href={`/shop-left-sidebar`}>
                   Women
                 </Link>
                 ,

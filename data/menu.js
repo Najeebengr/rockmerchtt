@@ -184,7 +184,7 @@ export const demoItems = [
 ];
 
 export const shopLayout = [
-  { href: "/shop-default-grid", name: "Default Grid" },
+  { href: "/shop-left-sidebar", name: "Default Grid" },
   { href: "/shop-default-list", name: "Default List" },
   { href: "/shop-fullwidth-list", name: "Full Width List" },
   { href: "/shop-fullwidth-grid", name: "Full Width Grid" },
