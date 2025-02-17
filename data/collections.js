@@ -1,6 +1,6 @@
 export const collections = [
   {
-    imgSrc: "/images/collections/collection-circle/cls-circle1.jpg",
+    imgSrc: "/images/collections/collection-circle/cls-circle1.jpeg",
     alt: "collection-img",
     title: "New in",
     count: "12 items",
