@@ -2,7 +2,7 @@ export const collections = [
   {
     imgSrc: "/images/collections/collection-circle/cls-circle1.jpeg",
     alt: "collection-img",
-    title: "New in",
+    title: "System Of A Down",
     count: "12 items",
   },
   {

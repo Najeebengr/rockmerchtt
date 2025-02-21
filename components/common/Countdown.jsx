@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
-const CountdownTimer = ({ style = 1, targetDate = "2025-06-31T23:59:59" }) => {
+const CountdownTimer = ({ style = 1, targetDate = "2025-03-10T23:59:59" }) => {
   const [showTimer, setShowTimer] = useState(false);
   useEffect(() => {
     setShowTimer(true);
