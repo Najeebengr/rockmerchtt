@@ -5,7 +5,6 @@ import "photoswipe/style.css";
 import "react-range-slider-input/dist/style.css";
 import "../public/css/image-compare-viewer.min.css";
 import { useEffect, useState } from "react";
-import ScrollTop from "@/components/common/ScrollTop";
 import Context from "@/context/Context";
 import CartModal from "@/components/modals/CartModal";
 import QuickView from "@/components/modals/QuickView";
@@ -18,7 +17,7 @@ import SizeGuide from "@/components/modals/SizeGuide";
 import Wishlist from "@/components/modals/Wishlist";
 import DemoModal from "@/components/modals/DemoModal";
 import Categories from "@/components/modals/Categories";
-
+import { ClerkProvider } from "@clerk/nextjs";
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   useEffect(() => {
@@ -120,9 +119,10 @@ export default function RootLayout({ children }) {
     wow.init();
   }, [pathname]);
   return (
-    <html lang="en">
-      <body className="preload-wrapper popup-loader">
-        <Context>
+    <ClerkProvider dynamic>
+      <html lang="en">
+        <body className="preload-wrapper popup-loader">
+          <Context>
           <div id="wrapper">{children}</div>
           <CartModal />
           <QuickView />
@@ -136,8 +136,9 @@ export default function RootLayout({ children }) {
           <Wishlist />
           <DemoModal />
           <Categories />
-        </Context>
-      </body>
-    </html>
+          </Context>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
