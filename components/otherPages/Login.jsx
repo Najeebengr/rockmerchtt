@@ -1,13 +1,65 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+
+
 export default function Login() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [passwordType, setPasswordType] = useState("password");
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const togglePassword = () => {
     setPasswordType((prevType) =>
       prevType === "password" ? "text" : "password"
     );
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+
+      // Use the login function from auth context
+      login(data.user, data.token);
+
+      // Redirect to my-account page instead of home
+      router.push('/my-account');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -18,8 +70,9 @@ export default function Login() {
             <div className="heading">
               <h4>Login</h4>
             </div>
+            {error && <div className="error-message" style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
             <form
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSubmit}
               className="form-login form-has-password"
             >
               <div className="wrap">
@@ -30,7 +83,8 @@ export default function Login() {
                     placeholder="Username or email address*"
                     name="email"
                     tabIndex={2}
-                    defaultValue=""
+                    value={formData.email}
+                    onChange={handleChange}
                     aria-required="true"
                     required
                   />
@@ -42,7 +96,8 @@ export default function Login() {
                     placeholder="Password*"
                     name="password"
                     tabIndex={2}
-                    defaultValue=""
+                    value={formData.password}
+                    onChange={handleChange}
                     aria-required="true"
                     required
                   />
@@ -84,8 +139,10 @@ export default function Login() {
                 </div>
               </div>
               <div className="button-submit">
-                <button className="tf-btn btn-fill" type="submit">
-                  <span className="text text-button">Login</span>
+                <button className="tf-btn btn-fill" type="submit" disabled={loading}>
+                  <span className="text text-button">
+                    {loading ? 'Signing in...' : 'Login'}
+                  </span>
                 </button>
               </div>
             </form>

@@ -1,20 +1,45 @@
+'use client';
+
 import Footer1 from "@/components/footers/Footer1";
 import Header1 from "@/components/headers/Header1";
-import Topbar6 from "@/components/headers/Topbar6";
+import Topbar from "@/components/headers/Topbar";
 import AccountSidebar from "@/components/my-account/AccountSidebar";
 import Information from "@/components/my-account/Information";
 import Link from "next/link";
-import React from "react";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export const metadata = {
-  title: "My Account || Modave - Multipurpose React Nextjs eCommerce Template",
-  description: "Modave - Multipurpose React Nextjs eCommerce Template",
-};
+export default function MyAccount() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
-export default function page() {
+  useEffect(() => {
+    // Check if we're in the browser
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [router]);
+
+  // Show loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Don't render the page content if user is not authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
-      <Topbar6 bgColor="bg-main" />
+      <Topbar bgColor="bg-main" />
       <Header1 />
       <>
         {/* page-title */}

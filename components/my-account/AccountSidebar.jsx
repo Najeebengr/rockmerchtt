@@ -3,22 +3,26 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
 export default function AccountSidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <div className="wrap-sidebar-account">
       <div className="sidebar-account">
         <div className="account-avatar">
-          <div className="image">
-            <Image
-              alt=""
-              src="/images/avatar/user-account.jpg"
-              width={281}
-              height={280}
-            />
-          </div>
-          <h6 className="mb_4">Tony Nguyen</h6>
-          <div className="body-text-1">themesflat@gmail.com</div>
+          
+          <h6 className="mb_4">{user?.firstName + ' ' + user?.lastName || 'User'}</h6>
+          <div className="body-text-1">{user?.email}</div>
         </div>
         <ul className="my-account-nav">
           <li>
@@ -113,6 +117,10 @@ export default function AccountSidebar() {
           <li>
             <Link
               href={`/login`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
               className={`my-account-nav-item ${
                 pathname == "/login" ? "active" : ""
               } `}

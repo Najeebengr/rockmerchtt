@@ -1,6 +1,6 @@
 export const slides = [
   {
-    imgSrc: "/images/slider/slider-women1.jpg",
+    imgSrc: "/images/slider/Banner.JPG",
     alt: "fashion-slideshow",
     subheading: "BIKINIS & SWIMSUITS",
     heading: "Flash Sale Madness",

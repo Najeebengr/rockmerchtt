@@ -1,10 +1,45 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from '@/context/AuthContext';
 
 export default function Information() {
+  const { user } = useAuth();
   const [passwordType, setPasswordType] = useState("password");
   const [confirmPasswordType, setConfirmPasswordType] = useState("password");
   const [newPasswordType, setNewPasswordType] = useState("password");
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: '',
+    password: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Initialize form data with user data when available
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        country: user.country || '',
+        // Don't set password fields as they should remain empty
+        password: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
+    }
+  }, [user]);
 
   const togglePassword = () => {
     setPasswordType((prevType) =>
@@ -17,29 +52,133 @@ export default function Information() {
       prevType === "password" ? "text" : "password"
     );
   };
+  
   const toggleNewPassword = () => {
     setNewPasswordType((prevType) =>
       prevType === "password" ? "text" : "password"
     );
   };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Check if password fields are filled
+    const isChangingPassword = formData.password || formData.newPassword || formData.confirmPassword;
+
+    if (isChangingPassword) {
+      // Validate passwords
+      if (formData.newPassword !== formData.confirmPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+
+      if (formData.newPassword.length < 6) {
+        setError('New password must be at least 6 characters long');
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      // Update user profile
+      const profileRes = await fetch('/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          country: formData.country
+        }),
+      });
+
+      if (!profileRes.ok) {
+        const data = await profileRes.json();
+        throw new Error(data.error || 'Failed to update profile');
+      }
+
+      // If changing password, make separate request
+      if (isChangingPassword) {
+        const passwordRes = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            currentPassword: formData.password,
+            newPassword: formData.newPassword
+          }),
+        });
+
+        if (!passwordRes.ok) {
+          const data = await passwordRes.json();
+          throw new Error(data.error || 'Failed to change password');
+        }
+
+        // Clear password fields
+        setFormData(prev => ({
+          ...prev,
+          password: '',
+          newPassword: '',
+          confirmPassword: ''
+        }));
+      }
+
+      // Update local storage with new user data
+      const updatedUser = {
+        ...user,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        country: formData.country
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      setSuccess('Profile updated successfully');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="my-account-content">
       <div className="account-details">
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSubmit}
           className="form-account-details form-has-password"
         >
           <div className="account-info">
             <h5 className="title">Information</h5>
+            {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+            {success && <div style={{ color: 'green', marginBottom: '15px' }}>{success}</div>}
+            
             <div className="cols mb_20">
               <fieldset className="">
                 <input
                   className=""
                   type="text"
                   placeholder="First Name*"
-                  name="text"
+                  name="firstName"
                   tabIndex={2}
-                  defaultValue="Tony"
+                  value={formData.firstName}
+                  onChange={handleChange}
                   aria-required="true"
                   required
                 />
@@ -49,9 +188,10 @@ export default function Information() {
                   className=""
                   type="text"
                   placeholder="Last Name*"
-                  name="text"
+                  name="lastName"
                   tabIndex={2}
-                  defaultValue="Nguyen"
+                  value={formData.lastName}
+                  onChange={handleChange}
                   aria-required="true"
                   required
                 />
@@ -65,7 +205,8 @@ export default function Information() {
                   placeholder="Username or email address*"
                   name="email"
                   tabIndex={2}
-                  defaultValue="themesflat@gmail.com"
+                  value={formData.email}
+                  readOnly
                   aria-required="true"
                   required
                 />
@@ -75,9 +216,10 @@ export default function Information() {
                   className=""
                   type="text"
                   placeholder="Phone*"
-                  name="text"
+                  name="phone"
                   tabIndex={2}
-                  defaultValue="(+12) 345 678 910"
+                  value={formData.phone}
+                  onChange={handleChange}
                   aria-required="true"
                   required
                 />
@@ -87,9 +229,12 @@ export default function Information() {
               <select
                 className="text-title"
                 id="country"
-                name="address[country]"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
                 data-default=""
               >
+                <option value="">Select Country</option>
                 <option
                   value="Australia"
                   data-provinces="[['Australian Capital Territory','Australian Capital Territory'],['New South Wales','New South Wales'],['Northern Territory','Northern Territory'],['Queensland','Queensland'],['South Australia','South Australia'],['Tasmania','Tasmania'],['Victoria','Victoria'],['Western Australia','Western Australia']]"
@@ -140,7 +285,7 @@ export default function Information() {
                 </option>
                 <option
                   value="Italy"
-                  data-provinces="[['Agrigento','Agrigento'],['Alessandria','Alessandria'],['Ancona','Ancona'],['Aosta','Aosta Valley'],['Arezzo','Arezzo'],['Ascoli Piceno','Ascoli Piceno'],['Asti','Asti'],['Avellino','Avellino'],['Bari','Bari'],['Barletta-Andria-Trani','Barletta-Andria-Trani'],['Belluno','Belluno'],['Benevento','Benevento'],['Bergamo','Bergamo'],['Biella','Biella'],['Bologna','Bologna'],['Bolzano','South Tyrol'],['Brescia','Brescia'],['Brindisi','Brindisi'],['Cagliari','Cagliari'],['Caltanissetta','Caltanissetta'],['Campobasso','Campobasso'],['Carbonia-Iglesias','Carbonia-Iglesias'],['Caserta','Caserta'],['Catania','Catania'],['Catanzaro','Catanzaro'],['Chieti','Chieti'],['Como','Como'],['Cosenza','Cosenza'],['Cremona','Cremona'],['Crotone','Crotone'],['Cuneo','Cuneo'],['Enna','Enna'],['Fermo','Fermo'],['Ferrara','Ferrara'],['Firenze','Florence'],['Foggia','Foggia'],['Forlì-Cesena','Forlì-Cesena'],['Frosinone','Frosinone'],['Genova','Genoa'],['Gorizia','Gorizia'],['Grosseto','Grosseto'],['Imperia','Imperia'],['Isernia','Isernia'],['L'Aquila','L’Aquila'],['La Spezia','La Spezia'],['Latina','Latina'],['Lecce','Lecce'],['Lecco','Lecco'],['Livorno','Livorno'],['Lodi','Lodi'],['Lucca','Lucca'],['Macerata','Macerata'],['Mantova','Mantua'],['Massa-Carrara','Massa and Carrara'],['Matera','Matera'],['Medio Campidano','Medio Campidano'],['Messina','Messina'],['Milano','Milan'],['Modena','Modena'],['Monza e Brianza','Monza and Brianza'],['Napoli','Naples'],['Novara','Novara'],['Nuoro','Nuoro'],['Ogliastra','Ogliastra'],['Olbia-Tempio','Olbia-Tempio'],['Oristano','Oristano'],['Padova','Padua'],['Palermo','Palermo'],['Parma','Parma'],['Pavia','Pavia'],['Perugia','Perugia'],['Pesaro e Urbino','Pesaro and Urbino'],['Pescara','Pescara'],['Piacenza','Piacenza'],['Pisa','Pisa'],['Pistoia','Pistoia'],['Pordenone','Pordenone'],['Potenza','Potenza'],['Prato','Prato'],['Ragusa','Ragusa'],['Ravenna','Ravenna'],['Reggio Calabria','Reggio Calabria'],['Reggio Emilia','Reggio Emilia'],['Rieti','Rieti'],['Rimini','Rimini'],['Roma','Rome'],['Rovigo','Rovigo'],['Salerno','Salerno'],['Sassari','Sassari'],['Savona','Savona'],['Siena','Siena'],['Siracusa','Syracuse'],['Sondrio','Sondrio'],['Taranto','Taranto'],['Teramo','Teramo'],['Terni','Terni'],['Torino','Turin'],['Trapani','Trapani'],['Trento','Trentino'],['Treviso','Treviso'],['Trieste','Trieste'],['Udine','Udine'],['Varese','Varese'],['Venezia','Venice'],['Verbano-Cusio-Ossola','Verbano-Cusio-Ossola'],['Vercelli','Vercelli'],['Verona','Verona'],['Vibo Valentia','Vibo Valentia'],['Vicenza','Vicenza'],['Viterbo','Viterbo']]"
+                  data-provinces="[['Agrigento','Agrigento'],['Alessandria','Alessandria'],['Ancona','Ancona'],['Aosta','Aosta Valley'],['Arezzo','Arezzo'],['Ascoli Piceno','Ascoli Piceno'],['Asti','Asti'],['Avellino','Avellino'],['Bari','Bari'],['Barletta-Andria-Trani','Barletta-Andria-Trani'],['Belluno','Belluno'],['Benevento','Benevento'],['Bergamo','Bergamo'],['Biella','Biella'],['Bologna','Bologna'],['Bolzano','South Tyrol'],['Brescia','Brescia'],['Brindisi','Brindisi'],['Cagliari','Cagliari'],['Caltanissetta','Caltanissetta'],['Campobasso','Campobasso'],['Carbonia-Iglesias','Carbonia-Iglesias'],['Caserta','Caserta'],['Catania','Catania'],['Catanzaro','Catanzaro'],['Chieti','Chieti'],['Como','Como'],['Cosenza','Cosenza'],['Cremona','Cremona'],['Crotone','Crotone'],['Cuneo','Cuneo'],['Enna','Enna'],['Fermo','Fermo'],['Ferrara','Ferrara'],['Firenze','Florence'],['Foggia','Foggia'],['Forlì-Cesena','Forlì-Cesena'],['Frosinone','Frosinone'],['Genova','Genoa'],['Gorizia','Gorizia'],['Grosseto','Grosseto'],['Imperia','Imperia'],['Isernia','Isernia'],['L'Aquila','L'Aquila'],['La Spezia','La Spezia'],['Latina','Latina'],['Lecce','Lecce'],['Lecco','Lecco'],['Livorno','Livorno'],['Lodi','Lodi'],['Lucca','Lucca'],['Macerata','Macerata'],['Mantova','Mantua'],['Massa-Carrara','Massa and Carrara'],['Matera','Matera'],['Medio Campidano','Medio Campidano'],['Messina','Messina'],['Milano','Milan'],['Modena','Modena'],['Monza e Brianza','Monza and Brianza'],['Napoli','Naples'],['Novara','Novara'],['Nuoro','Nuoro'],['Ogliastra','Ogliastra'],['Olbia-Tempio','Olbia-Tempio'],['Oristano','Oristano'],['Padova','Padua'],['Palermo','Palermo'],['Parma','Parma'],['Pavia','Pavia'],['Perugia','Perugia'],['Pesaro e Urbino','Pesaro and Urbino'],['Pescara','Pescara'],['Piacenza','Piacenza'],['Pisa','Pisa'],['Pistoia','Pistoia'],['Pordenone','Pordenone'],['Potenza','Potenza'],['Prato','Prato'],['Ragusa','Ragusa'],['Ravenna','Ravenna'],['Reggio Calabria','Reggio Calabria'],['Reggio Emilia','Reggio Emilia'],['Rieti','Rieti'],['Rimini','Rimini'],['Roma','Rome'],['Rovigo','Rovigo'],['Salerno','Salerno'],['Sassari','Sassari'],['Savona','Savona'],['Siena','Siena'],['Siracusa','Syracuse'],['Sondrio','Sondrio'],['Taranto','Taranto'],['Teramo','Teramo'],['Terni','Terni'],['Torino','Turin'],['Trapani','Trapani'],['Trento','Trentino'],['Treviso','Treviso'],['Trieste','Trieste'],['Udine','Udine'],['Varese','Varese'],['Venezia','Venice'],['Verbano-Cusio-Ossola','Verbano-Cusio-Ossola'],['Vercelli','Vercelli'],['Verona','Verona'],['Vibo Valentia','Vibo Valentia'],['Vicenza','Vicenza'],['Viterbo','Viterbo']]"
                 >
                   Italy
                 </option>
@@ -161,7 +306,7 @@ export default function Information() {
                 </option>
                 <option
                   value="New Zealand"
-                  data-provinces="[['Auckland','Auckland'],['Bay of Plenty','Bay of Plenty'],['Canterbury','Canterbury'],['Chatham Islands','Chatham Islands'],['Gisborne','Gisborne'],['Hawke's Bay','Hawke’s Bay'],['Manawatu-Wanganui','Manawatū-Whanganui'],['Marlborough','Marlborough'],['Nelson','Nelson'],['Northland','Northland'],['Otago','Otago'],['Southland','Southland'],['Taranaki','Taranaki'],['Tasman','Tasman'],['Waikato','Waikato'],['Wellington','Wellington'],['West Coast','West Coast']]"
+                  data-provinces="[['Auckland','Auckland'],['Bay of Plenty','Bay of Plenty'],['Canterbury','Canterbury'],['Chatham Islands','Chatham Islands'],['Gisborne','Gisborne'],['Hawke's Bay','Hawke's Bay'],['Manawatu-Wanganui','Manawatū-Whanganui'],['Marlborough','Marlborough'],['Nelson','Nelson'],['Northland','Northland'],['Otago','Otago'],['Southland','Southland'],['Taranaki','Taranaki'],['Tasman','Tasman'],['Waikato','Waikato'],['Wellington','Wellington'],['West Coast','West Coast']]"
                 >
                   New Zealand
                 </option>
@@ -228,12 +373,12 @@ export default function Information() {
               <input
                 className="input-password"
                 type={passwordType}
-                placeholder="Password*"
+                placeholder="Current Password*"
                 name="password"
+                value={formData.password}
+                onChange={handleChange}
                 tabIndex={2}
-                defaultValue=""
                 aria-required="true"
-                required
               />
               <span
                 className={`toggle-password ${
@@ -254,10 +399,10 @@ export default function Information() {
                 type={newPasswordType}
                 placeholder="New Password*"
                 name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
                 tabIndex={2}
-                defaultValue=""
                 aria-required="true"
-                required
               />
               <span
                 className={`toggle-password ${
@@ -276,12 +421,12 @@ export default function Information() {
               <input
                 className="input-password"
                 type={confirmPasswordType}
-                placeholder="Confirm Password*"
+                placeholder="Confirm New Password*"
                 name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 tabIndex={2}
-                defaultValue=""
                 aria-required="true"
-                required
               />
               <span
                 className={`toggle-password ${
@@ -298,8 +443,10 @@ export default function Information() {
             </fieldset>
           </div>
           <div className="button-submit">
-            <button className="tf-btn btn-fill" type="submit">
-              <span className="text text-button">Update Account</span>
+            <button className="tf-btn btn-fill" type="submit" disabled={loading}>
+              <span className="text text-button">
+                {loading ? 'Updating...' : 'Update Account'}
+              </span>
             </button>
           </div>
         </form>

@@ -43,10 +43,17 @@ export default function Nav() {
         <Link href="/shop-left-sidebar" className="item-link">
           Shop
         </Link>
-        
       </li>
- 
-   
+      <li className={`menu-item ${pathname === "/about-us" ? "active" : ""}`}>
+        <Link href="/about-us" className="item-link">
+          About Us
+        </Link>
+      </li>
+      <li className={`menu-item ${pathname === "/contact" ? "active" : ""}`}>
+        <Link href="/contact" className="item-link">
+          Contact Us
+        </Link>
+      </li>
     </>
   );
 }

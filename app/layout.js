@@ -17,7 +17,8 @@ import SizeGuide from "@/components/modals/SizeGuide";
 import Wishlist from "@/components/modals/Wishlist";
 import DemoModal from "@/components/modals/DemoModal";
 import Categories from "@/components/modals/Categories";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from '@/context/AuthContext'
+
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   useEffect(() => {
@@ -119,26 +120,26 @@ export default function RootLayout({ children }) {
     wow.init();
   }, [pathname]);
   return (
-    <ClerkProvider dynamic>
-      <html lang="en">
-        <body className="preload-wrapper popup-loader">
+    <html lang="en">
+      <body className="preload-wrapper popup-loader">
+        <AuthProvider>
           <Context>
-          <div id="wrapper">{children}</div>
-          <CartModal />
-          <QuickView />
-          <QuickAdd />
-          <Compare />
-          <MobileMenu />
+            <div id="wrapper">{children}</div>
+            <CartModal />
+            <QuickView />
+            <QuickAdd />
+            <Compare />
+            <MobileMenu />
 
-          <NewsLetterModal />
-          <SearchModal />
-          <SizeGuide />
-          <Wishlist />
-          <DemoModal />
-          <Categories />
+            <NewsLetterModal />
+            <SearchModal />
+            <SizeGuide />
+            <Wishlist />
+            <DemoModal />
+            <Categories />
           </Context>
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

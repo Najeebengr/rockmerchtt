@@ -1,9 +1,22 @@
+'use client';
+
 import React from "react";
 import Nav from "./Nav";
 import Image from "next/image";
 import Link from "next/link";
 import CartLength from "../common/CartLength";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
 export default function Header1({ fullWidth = false }) {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <header
       id="header"
@@ -99,18 +112,41 @@ export default function Header1({ fullWidth = false }) {
                   </svg>
                 </a>
                 <div className="dropdown-account dropdown-login">
-                  <div className="sub-top">
-                    <Link href={`/login`} className="tf-btn btn-reset">
-                      Login
-                    </Link>
-                    <p className="text-center text-secondary-2">
-                      Don’t have an account?{" "}
-                      <Link href={`/register`}>Register</Link>
-                    </p>
-                  </div>
-                  <div className="sub-bot">
-                    <span className="body-text-">Support</span>
-                  </div>
+                  {!user ? (
+                    <>
+                      <div className="sub-top">
+                        <Link href={`/login`} className="tf-btn btn-reset">
+                          Login
+                        </Link>
+                        <p className="text-center text-secondary-2">
+                          Don't have an account?{" "}
+                          <Link href={`/register`}>Register</Link>
+                        </p>
+                      </div>
+                      <div className="sub-bot">
+                        <span className="body-text-">Support</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="sub-top">
+                        <div className="user-info text-center mb-3">
+                          <span className="email">{user.email}</span>
+                        </div>
+                        {user.role === 'admin' && (
+                          <Link href={`/admin`} className="tf-btn btn-reset mb-2">
+                            Admin Dashboard
+                          </Link>
+                        )}
+                        <button onClick={handleLogout} className="tf-btn btn-reset">
+                          Logout
+                        </button>
+                      </div>
+                      <div className="sub-bot">
+                        <span className="body-text-">Support</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </li>
               <li className="nav-wishlist">

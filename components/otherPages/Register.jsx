@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
+  const router = useRouter();
   const [passwordType, setPasswordType] = useState("password");
   const [confirmPasswordType, setConfirmPasswordType] = useState("password");
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const togglePassword = () => {
     setPasswordType((prevType) =>
@@ -18,6 +27,61 @@ export default function Register() {
       prevType === "password" ? "text" : "password"
     );
   };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate terms checkbox
+    const termsCheckbox = document.getElementById('login-form_agree');
+    if (!termsCheckbox.checked) {
+      setError('Please agree to the Terms of Use');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+
+      // Redirect to login page on successful signup
+      router.push('/login');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="flat-spacing">
       <div className="container">
@@ -26,8 +90,9 @@ export default function Register() {
             <div className="heading">
               <h4>Register</h4>
             </div>
+            {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
             <form
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSubmit}
               className="form-login form-has-password"
             >
               <div className="wrap">
@@ -38,7 +103,8 @@ export default function Register() {
                     placeholder="Username or email address*"
                     name="email"
                     tabIndex={2}
-                    defaultValue=""
+                    value={formData.email}
+                    onChange={handleChange}
                     aria-required="true"
                     required
                   />
@@ -50,7 +116,8 @@ export default function Register() {
                     placeholder="Password*"
                     name="password"
                     tabIndex={2}
-                    defaultValue=""
+                    value={formData.password}
+                    onChange={handleChange}
                     aria-required="true"
                     required
                   />
@@ -75,7 +142,8 @@ export default function Register() {
                     placeholder="Confirm Password*"
                     name="confirmPassword"
                     tabIndex={2}
-                    defaultValue=""
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
                     aria-required="true"
                     required
                   />
@@ -119,8 +187,10 @@ export default function Register() {
                 </div>
               </div>
               <div className="button-submit">
-                <button className="tf-btn btn-fill" type="submit">
-                  <span className="text text-button">Register</span>
+                <button className="tf-btn btn-fill" type="submit" disabled={loading}>
+                  <span className="text text-button">
+                    {loading ? 'Creating Account...' : 'Register'}
+                  </span>
                 </button>
               </div>
             </form>

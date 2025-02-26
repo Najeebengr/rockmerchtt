@@ -1,4 +1,4 @@
- export const productType = {
+export const productType = {
   name: 'product',
   title: 'Product',
   type: 'document',
@@ -7,6 +7,19 @@
       name: 'title',
       title: 'Title',
       type: 'string',
+      validation: Rule => Rule.required()
+    },
+    {
+      name: 'category',
+      title: 'Category',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Men', value: 'men' },
+          { title: 'Women', value: 'women' },
+          { title: 'Children', value: 'children' }
+        ]
+      },
       validation: Rule => Rule.required()
     },
     {
