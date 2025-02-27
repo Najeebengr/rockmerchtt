@@ -99,7 +99,7 @@ export default function Footer1({
                       </Link>
                     </div>
                     <div className="footer-address">
-                      <p>549 Oak St.Crystal Lake, IL 60014</p>
+                      <p>Gasparillo, Trinidad and Tobago</p>
                       <Link
                         href={`/contact`}
                         className={`tf-btn-default fw-6 ${
@@ -113,11 +113,11 @@ export default function Footer1({
                     <ul className="footer-info">
                       <li>
                         <i className="icon-mail" />
-                        <p>themesflat@gmail.com</p>
+                        <p><a href="mailto:sales@rockmerchtt.com">sales@rockmerchtt.com</a></p>
                       </li>
                       <li>
                         <i className="icon-phone" />
-                        <p>315-666-6688</p>
+                        <p><a href="https://wa.me/18684676929">+1 (868) 467-6929</a></p>
                       </li>
                     </ul>
                     <ul
@@ -263,7 +263,7 @@ export default function Footer1({
                   <div className="footer-bottom-wrap">
                     <div className="left">
                       <p className="text-caption-1">
-                        ©{new Date().getFullYear()} Modave. All Rights Reserved.
+                        ©{new Date().getFullYear()} RockMerchTT. All Rights Reserved.
                       </p>
                     
                     </div>

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Pagination } from "swiper/modules";
 export default function ShopGram({ parentClass = "" }) {
   return (
-    <section className={parentClass}>
+    <section className={parentClass} style={{ paddingTop: '40px' }}>
       <div className="container">
         <div className="heading-section text-center">
           <h3 className="heading wow fadeInUp">Shop Instagram</h3>

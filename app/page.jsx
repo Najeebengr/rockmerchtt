@@ -8,7 +8,6 @@ import Features from "@/components/common/Features";
 import Hero from "@/components/homes/home-1/Hero";
 import Products from "@/components/common/Products3";
 import ShopGram from "@/components/common/ShopGram";
-import Testimonials from "@/components/common/Testimonials";
 
 export const metadata = {
   title: "Rock Merch TT | Premium Band T-Shirts & Music Merchandise",
@@ -41,7 +40,6 @@ export default function Home() {
       <Products />
       <BannerCollection />
       <BannerCountdown />
-      <Testimonials />
       <ShopGram />
       <Features />
       <Footer1 />

@@ -20,11 +20,11 @@ export default function BannerCollection() {
             <div className="content">
               <h3 className="title wow fadeInUp">
                 <Link href={`/shop-collection`} className="link">
-                  Crossbody bag
+                  Classic Rock Tees
                 </Link>
               </h3>
               <p className="desc wow fadeInUp">
-                From beach to party: Perfect styles for every occasion.
+                Iconic band shirts from legendary rock artists
               </p>
               <div className="wow fadeInUp">
                 <Link href={`/shop-collection`} className="btn-line">
@@ -50,11 +50,11 @@ export default function BannerCollection() {
                   href={`/shop-collection`}
                   className="link text-white wow fadeInUp"
                 >
-                  Capsule Collection
+                  Limited Edition Collection
                 </Link>
               </h3>
               <p className="desc text-white wow fadeInUp">
-                Reserved for special occasions
+                Exclusive rock merch you won't find anywhere else
               </p>
               <div className="wow fadeInUp">
                 <Link

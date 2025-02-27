@@ -36,7 +36,7 @@ export default function Hero() {
                           width: '100%',
                           height: 'auto',
                           objectFit: 'contain',
-                          '@media (max-width: 768px)': {
+                          '@media (maxWidth: 768px)': {
                             objectFit: 'contain',
                             maxHeight: '400px'
                           }

@@ -13,9 +13,7 @@ export default function Features({ parentClass = "flat-spacing" }) {
           className="swiper tf-sw-iconbox"
           spaceBetween={15}
           breakpoints={{
-            1200: { slidesPerView: 4 },
-            768: { slidesPerView: 3 },
-            576: { slidesPerView: 2 },
+            768: { slidesPerView: 2 },
             0: { slidesPerView: 1 },
           }}
           modules={[Pagination]}
@@ -25,8 +23,8 @@ export default function Features({ parentClass = "flat-spacing" }) {
           }}
         >
           {iconboxItems.map((item) => (
-            <SwiperSlide key={item.id}>
-              <div className="tf-icon-box">
+            <SwiperSlide key={item.id} >
+              <div className="tf-icon-box" style={{ justifyContent: 'center' }}>
                 <div className="icon-box">
                   <span className={`icon ${item.icon}`} />
                 </div>
