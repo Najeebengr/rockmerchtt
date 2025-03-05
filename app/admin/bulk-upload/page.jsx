@@ -11,6 +11,8 @@ export default function BulkUpload() {
   const [results, setResults] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const BATCH_SIZE = 50; // Number of products to process at once
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -48,87 +50,97 @@ export default function BulkUpload() {
           let successful = 0;
           let failed = 0;
           const errors = [];
+          const total = jsonData.length;
 
-          for (const row of jsonData) {
-            try {
-              if (!row.title || !row.price || !row.category) {
-                throw new Error('Missing required fields: title, price, or category');
-              }
+          setProgress({ current: 0, total });
 
-              // Handle brand references
-              let brandReferences = [];
-              if (row.filterBrands) {
-                const brandNames = row.filterBrands.split(',').map(b => b.trim());
-                brandReferences = brandNames.map(brandName => {
-                  const brandId = brandMap.get(brandName.toLowerCase());
-                  if (!brandId) {
-                    console.warn(`Brand not found: ${brandName}`);
-                    return null;
-                  }
-                  return {
-                    _type: 'reference',
-                    _ref: brandId
-                  };
-                }).filter(Boolean); // Remove null values
-              }
-
-              const productDoc = {
-                _type: 'products',
-                title: row.title,
-                price: parseFloat(row.price),
-                oldPrice: row.oldPrice ? parseFloat(row.oldPrice) : undefined,
-                category: row.category,
-                isOnSale: row.isOnSale === 'true',
-                salePercentage: row.salePercentage,
-                inStock: row.inStock !== 'false',
-                rating: row.rating ? parseFloat(row.rating) : undefined,
-                reviews: row.reviews ? parseInt(row.reviews) : undefined,
-                countdown: row.countdown ? parseInt(row.countdown) : undefined,
-                // Add brand references
-                filterBrands: brandReferences,
-                filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
-                filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : [],
-                tabFilterOptions: row.tabFilterOptions ? row.tabFilterOptions.split(',').map(item => item.trim()) : [],
-                tabFilterOptions2: row.tabFilterOptions2 ? row.tabFilterOptions2.split(',').map(item => item.trim()) : [],
-                imgSrc: row.imgSrc || '',
-                imgHover: row.imgHover || ''
-              };
-
-              // Handle color variants if present
-              if (row.colors) {
-                try {
-                  const colors = JSON.parse(row.colors);
-                  if (Array.isArray(colors)) {
-                    productDoc.colors = colors.map(color => ({
-                      _type: 'color',
-                      bgColor: color.bgColor,
-                      imgSrc: color.imgSrc || '' // Store URL as string
-                    }));
-                  }
-                } catch (error) {
-                  console.warn('Invalid colors format:', error);
+          // Process in batches
+          for (let i = 0; i < jsonData.length; i += BATCH_SIZE) {
+            const batch = jsonData.slice(i, i + BATCH_SIZE);
+            
+            // Process batch in parallel
+            await Promise.all(batch.map(async (row) => {
+              try {
+                if (!row.title || !row.price || !row.category) {
+                  throw new Error('Missing required fields: title, price, or category');
                 }
+
+                // Handle brand references
+                let brandReferences = [];
+                if (row.filterBrands) {
+                  const brandNames = row.filterBrands.split(',').map(b => b.trim());
+                  brandReferences = brandNames.map((brandName, index) => {
+                    const brandId = brandMap.get(brandName.toLowerCase());
+                    if (!brandId) {
+                      console.warn(`Brand not found: ${brandName}`);
+                      return null;
+                    }
+                    return {
+                      _key: `brand${index}`,
+                      _type: 'reference',
+                      _ref: brandId
+                    };
+                  }).filter(Boolean);
+                }
+
+                const productDoc = {
+                  _type: 'products',
+                  title: row.title,
+                  price: parseFloat(row.price),
+                  oldPrice: row.oldPrice ? parseFloat(row.oldPrice) : undefined,
+                  category: row.category,
+                  isOnSale: row.isOnSale === 'true',
+                  salePercentage: row.salePercentage,
+                  inStock: row.inStock !== 'false',
+                  rating: row.rating ? parseFloat(row.rating) : undefined,
+                  reviews: row.reviews ? parseInt(row.reviews) : undefined,
+                  countdown: row.countdown ? parseInt(row.countdown) : undefined,
+                  filterBrands: brandReferences,
+                  filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
+                  filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : [],
+                  tabFilterOptions: row.tabFilterOptions ? row.tabFilterOptions.split(',').map(item => item.trim()) : [],
+                  tabFilterOptions2: row.tabFilterOptions2 ? row.tabFilterOptions2.split(',').map(item => item.trim()) : [],
+                  imgSrc: row.imgSrc || '',
+                  imgHover: row.imgHover || ''
+                };
+
+                // Handle color variants if present
+                if (row.colors) {
+                  try {
+                    const colors = JSON.parse(row.colors);
+                    if (Array.isArray(colors)) {
+                      productDoc.colors = colors.map(color => ({
+                        _type: 'color',
+                        bgColor: color.bgColor,
+                        imgSrc: color.imgSrc || '' // Store URL as string
+                      }));
+                    }
+                  } catch (error) {
+                    console.warn('Invalid colors format:', error);
+                  }
+                }
+
+                const response = await fetch('/api/bulk-upload', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(productDoc)
+                });
+
+                if (!response.ok) {
+                  throw new Error('Failed to create product');
+                }
+
+                successful++;
+              } catch (error) {
+                failed++;
+                errors.push(`Row ${i + batch.indexOf(row) + 1}: ${error.message}`);
               }
+            }));
 
-              // Use the API route to create the product
-              const response = await fetch('/api/bulk-upload', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(productDoc)
-              });
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create product');
-              }
-
-              successful++;
-            } catch (error) {
-              failed++;
-              errors.push(`Row ${successful + failed}: ${error.message}`);
-            }
+            // Update progress after each batch
+            setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
           }
 
           setResults({

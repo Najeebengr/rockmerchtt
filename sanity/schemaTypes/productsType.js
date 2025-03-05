@@ -34,15 +34,47 @@ export const productsType = {
         type: 'number'
       },
       {
+        name: 'mainImage',
+        title: 'Main Image',
+        type: 'image',
+        options: {
+          hotspot: true
+        },
+        fields: [
+          {
+            name: 'alt',
+            type: 'string',
+            title: 'Alternative text',
+            description: 'Important for SEO and accessibility.'
+          }
+        ]
+      },
+      {
+        name: 'hoverImage',
+        title: 'Hover Image',
+        type: 'image',
+        options: {
+          hotspot: true
+        },
+        fields: [
+          {
+            name: 'alt',
+            type: 'string',
+            title: 'Alternative text'
+          }
+        ]
+      },
+      {
         name: 'imgSrc',
-        title: 'Main Image URL',
+        title: 'Main Image URL (External)',
         type: 'string',
-        validation: Rule => Rule.required()
+        description: 'Optional: Use this for external image URLs'
       },
       {
         name: 'imgHover',
-        title: 'Hover Image URL',
-        type: 'string'
+        title: 'Hover Image URL (External)',
+        type: 'string',
+        description: 'Optional: Use this for external hover image URLs'
       },
       {
         name: 'isOnSale',
@@ -75,9 +107,18 @@ export const productsType = {
                 type: 'string'
               },
               {
+                name: 'variantImage',
+                type: 'image',
+                title: 'Variant Image',
+                options: {
+                  hotspot: true
+                }
+              },
+              {
                 name: 'imgSrc',
-                title: 'Variant Image URL',
-                type: 'string'
+                title: 'External Image URL',
+                type: 'string',
+                description: 'Optional: Use this for external image URLs'
               }
             ]
           }
@@ -129,5 +170,11 @@ export const productsType = {
         title: 'Sale Countdown (in seconds)',
         type: 'number'
       }
-    ]
+    ],
+    preview: {
+      select: {
+        title: 'title',
+        media: 'mainImage'
+      }
+    }
   }
