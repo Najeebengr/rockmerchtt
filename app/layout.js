@@ -121,6 +121,36 @@ export default function RootLayout({ children }) {
   }, [pathname]);
   return (
     <html lang="en">
+      <head>
+        <style>{`
+          html, body {
+            overflow-x: hidden !important;
+            position: relative;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          #wrapper {
+            overflow-x: hidden !important;
+            position: relative;
+            width: 100%;
+          }
+
+          @media (max-width: 768px) {
+            body > div {
+              overflow-x: hidden !important;
+            }
+
+            .container, 
+            .container-fluid {
+              max-width: 100% !important;
+              overflow-x: hidden !important;
+            }
+          }
+        `}</style>
+      </head>
       <body className="preload-wrapper popup-loader">
         <AuthProvider>
           <Context>
@@ -130,7 +160,6 @@ export default function RootLayout({ children }) {
             <QuickAdd />
             <Compare />
             <MobileMenu />
-
             <NewsLetterModal />
             <SearchModal />
             <SizeGuide />
