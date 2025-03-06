@@ -4,6 +4,29 @@ import * as XLSX from 'xlsx';
 import { writeClient } from '@/sanity/lib/client';
 import { FiUploadCloud, FiDownload, FiFile, FiCheck, FiAlertTriangle } from 'react-icons/fi';
 import styles from './styles.module.css';
+import ProgressBar from './components/ProgressBar';
+
+async function uploadImageFromUrl(imageUrl) {
+  try {
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageUrl })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload image');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+}
 
 export default function BulkUpload() {
   const [file, setFile] = useState(null);
@@ -13,6 +36,8 @@ export default function BulkUpload() {
   const fileInputRef = useRef(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const BATCH_SIZE = 50; // Number of products to process at once
+  const [imageProgress, setImageProgress] = useState({ current: 0, total: 0 });
+  const [isComplete, setIsComplete] = useState(false);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -25,6 +50,9 @@ export default function BulkUpload() {
     }
 
     setUploading(true);
+    setIsComplete(false);
+    setResults(null);
+
     try {
       // First, fetch all existing brands
       const brands = await writeClient.fetch(`
@@ -47,6 +75,40 @@ export default function BulkUpload() {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+          // Collect all images first
+          const imagesToUpload = [];
+          jsonData.forEach((row, rowIndex) => {
+            if (row.imgSrc) {
+              imagesToUpload.push({ url: row.imgSrc, index: `main_${rowIndex}` });
+            }
+            if (row.imgHover) {
+              imagesToUpload.push({ url: row.imgHover, index: `hover_${rowIndex}` });
+            }
+            if (row.colors) {
+              try {
+                const colors = JSON.parse(row.colors);
+                colors.forEach((color, colorIndex) => {
+                  if (color.imgSrc) {
+                    imagesToUpload.push({
+                      url: color.imgSrc,
+                      index: `color_${rowIndex}_${colorIndex}`
+                    });
+                  }
+                });
+              } catch (error) {
+                console.warn('Invalid colors format:', error);
+              }
+            }
+          });
+
+          // Set total images to upload
+          setImageProgress({ current: 0, total: imagesToUpload.length });
+
+          // Upload all images first
+          console.log(`Uploading ${imagesToUpload.length} images...`);
+          const uploadedImages = await uploadImagesBatch(imagesToUpload);
+
+          // Process products with uploaded images
           let successful = 0;
           let failed = 0;
           const errors = [];
@@ -54,12 +116,11 @@ export default function BulkUpload() {
 
           setProgress({ current: 0, total });
 
-          // Process in batches
+          // Process products in batches
           for (let i = 0; i < jsonData.length; i += BATCH_SIZE) {
             const batch = jsonData.slice(i, i + BATCH_SIZE);
             
-            // Process batch in parallel
-            await Promise.all(batch.map(async (row) => {
+            await Promise.all(batch.map(async (row, batchIndex) => {
               try {
                 if (!row.title || !row.price || !row.category) {
                   throw new Error('Missing required fields: title, price, or category');
@@ -100,59 +161,62 @@ export default function BulkUpload() {
                   filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : [],
                   tabFilterOptions: row.tabFilterOptions ? row.tabFilterOptions.split(',').map(item => item.trim()) : [],
                   tabFilterOptions2: row.tabFilterOptions2 ? row.tabFilterOptions2.split(',').map(item => item.trim()) : [],
-                  imgSrc: row.imgSrc || '',
-                  imgHover: row.imgHover || ''
                 };
 
-                // Handle color variants if present
+                // Add uploaded images
+                const mainImage = uploadedImages.get(`main_${i + batchIndex}`);
+                const hoverImage = uploadedImages.get(`hover_${i + batchIndex}`);
+                
+                if (row.imgSrc && mainImage) {
+                  productDoc.mainImage = mainImage;
+                }
+                if (row.imgHover && hoverImage) {
+                  productDoc.hoverImage = hoverImage;
+                }
+
+                // Handle color variants
                 if (row.colors) {
                   try {
                     const colors = JSON.parse(row.colors);
-                    if (Array.isArray(colors)) {
-                      productDoc.colors = colors.map(color => ({
+                    productDoc.colors = colors.map((color, colorIndex) => {
+                      const variantImage = uploadedImages.get(`color_${i + batchIndex}_${colorIndex}`);
+                      return {
+                        _key: `color${colorIndex}`,
                         _type: 'color',
                         bgColor: color.bgColor,
-                        imgSrc: color.imgSrc || '' // Store URL as string
-                      }));
-                    }
+                        variantImage: variantImage || null
+                      };
+                    });
                   } catch (error) {
                     console.warn('Invalid colors format:', error);
                   }
                 }
 
+                // Create the product
                 const response = await fetch('/api/bulk-upload', {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(productDoc)
                 });
 
-                if (!response.ok) {
-                  throw new Error('Failed to create product');
-                }
-
+                if (!response.ok) throw new Error('Failed to create product');
                 successful++;
               } catch (error) {
                 failed++;
-                errors.push(`Row ${i + batch.indexOf(row) + 1}: ${error.message}`);
+                errors.push(`Row ${i + batchIndex + 1}: ${error.message}`);
               }
             }));
 
-            // Update progress after each batch
             setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
           }
 
+          setIsComplete(true);
           setResults({
             total: jsonData.length,
             successful,
             failed,
             errors
           });
-
-          if (successful > 0) {
-            alert(`Successfully uploaded ${successful} products!`);
-          }
         } catch (error) {
           console.error('Error processing file:', error);
           setResults({
@@ -161,6 +225,7 @@ export default function BulkUpload() {
             failed: 1,
             errors: [`Error processing file: ${error.message}`]
           });
+          setIsComplete(true);
         }
       };
 
@@ -182,8 +247,7 @@ export default function BulkUpload() {
         failed: 1,
         errors: [`Upload error: ${error.message}`]
       });
-    } finally {
-      setUploading(false);
+      setIsComplete(true);
     }
   };
 
@@ -298,6 +362,50 @@ export default function BulkUpload() {
     fileInputRef.current?.click();
   };
 
+  // Batch image upload function
+  async function uploadImagesBatch(images) {
+    const batchSize = 10; // Process 10 images at a time
+    const results = new Map();
+    
+    for (let i = 0; i < images.length; i += batchSize) {
+      const batch = images.slice(i, Math.min(i + batchSize, images.length));
+      const batchPromises = batch.map(async ({ url, index }) => {
+        try {
+          const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: url })
+          });
+          
+          if (!response.ok) throw new Error('Failed to upload image');
+          const result = await response.json();
+          results.set(index, result);
+        } catch (error) {
+          console.error(`Error uploading image ${index}:`, error);
+          results.set(index, null);
+        }
+        setImageProgress(prev => ({
+          ...prev,
+          current: prev.current + 1
+        }));
+      });
+
+      await Promise.all(batchPromises);
+    }
+    
+    return results;
+  }
+
+  useEffect(() => {
+    if (isComplete && uploading) {
+      const timer = setTimeout(() => {
+        setUploading(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, uploading]);
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -365,7 +473,42 @@ export default function BulkUpload() {
         </button>
       </div>
 
-      {results && (
+      {uploading && (
+        <div className={styles.card}>
+          <h2 className={styles.subtitle}>Upload Progress</h2>
+          
+          {imageProgress.total > 0 && (
+            <>
+              <h3 className={styles.progressTitle}>
+                Uploading Images {isComplete && '(Complete)'}
+              </h3>
+              <ProgressBar
+                current={imageProgress.current}
+                total={imageProgress.total}
+                uploading={!isComplete}
+              />
+            </>
+          )}
+          
+          <h3 className={styles.progressTitle}>
+            Processing Products {isComplete && '(Complete)'}
+          </h3>
+          <ProgressBar
+            current={progress.current}
+            total={progress.total}
+            uploading={!isComplete}
+          />
+
+          {isComplete && (
+            <div className={styles.completionMessage}>
+              <FiCheck className={styles.checkIcon} />
+              <span>Processing complete! Showing results below...</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isComplete && results && (
         <div className={styles.card}>
           <h2 className={styles.subtitle}>Upload Results</h2>
           

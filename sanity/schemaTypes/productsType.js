@@ -65,18 +65,6 @@ export const productsType = {
         ]
       },
       {
-        name: 'imgSrc',
-        title: 'Main Image URL (External)',
-        type: 'string',
-        description: 'Optional: Use this for external image URLs'
-      },
-      {
-        name: 'imgHover',
-        title: 'Hover Image URL (External)',
-        type: 'string',
-        description: 'Optional: Use this for external hover image URLs'
-      },
-      {
         name: 'isOnSale',
         title: 'Is On Sale',
         type: 'boolean',

@@ -2,13 +2,10 @@ import { writeClient } from '@/sanity/lib/client';
 
 export async function POST(req) {
   try {
-    const data = await req.json();
+    const productData = await req.json();
     
-    // Create the product using the write client
-    const result = await writeClient.create({
-      _type: 'products',
-      ...data
-    });
+    // Create the product with Sanity
+    const result = await writeClient.create(productData);
 
     return Response.json({ success: true, result });
   } catch (error) {
