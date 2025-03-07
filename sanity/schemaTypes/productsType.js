@@ -10,6 +10,12 @@ export const productsType = {
         validation: Rule => Rule.required()
       },
       {
+        name: 'description',
+        title: 'Description',
+        type: 'text',
+        validation: Rule => Rule.required()
+      },
+      {
         name: 'category',
         title: 'Category',
         type: 'string',
@@ -38,12 +44,6 @@ export const productsType = {
         validation: Rule => Rule.required()
       },
       {
-        name: 'quantity',
-        title: 'Quantity',
-        type: 'number',
-        validation: Rule => Rule.required().min(0)
-      },
-      {
         name: 'filterBrands',
         title: 'Brand',
         type: 'array',
@@ -58,16 +58,33 @@ export const productsType = {
         validation: Rule => Rule.required()
       },
       {
-        name: 'filterSizes',
-        title: 'Available Sizes',
+        name: 'sizeQuantities',
+        title: 'Sizes and Quantities',
         type: 'array',
-        of: [{ type: 'string' }],
+        of: [{
+          type: 'object',
+          fields: [
+            {
+              name: 'size',
+              title: 'Size',
+              type: 'string',
+              validation: Rule => Rule.required()
+            },
+            {
+              name: 'quantity',
+              title: 'Quantity',
+              type: 'number',
+              validation: Rule => Rule.required().min(0)
+            }
+          ]
+        }],
         validation: Rule => Rule.required()
       }
     ],
     preview: {
       select: {
         title: 'title',
+        subtitle: 'description',
         media: 'mainImage'
       }
     }

@@ -147,13 +147,40 @@ export default function BulkUpload() {
                 const productDoc = {
                   _type: 'products',
                   title: row.title,
+                  description: row.description,
                   price: parseFloat(row.price),
                   category: row.category,
-                  quantity: parseInt(row.quantity),
                   filterBrands: brandReferences,
                   filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
-                  filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : []
                 };
+
+                // Validate required fields
+                if (!row.description) {
+                  throw new Error('Description is required');
+                }
+
+                // Parse and validate size quantities
+                if (row.sizeQuantities) {
+                  try {
+                    const sizeQuantities = JSON.parse(row.sizeQuantities);
+                    if (!Array.isArray(sizeQuantities)) {
+                      throw new Error('Size quantities must be an array');
+                    }
+                    
+                    productDoc.sizeQuantities = sizeQuantities.map((sq, index) => ({
+                      _key: `size${index}`,
+                      size: sq.size,
+                      quantity: parseInt(sq.quantity)
+                    }));
+
+                    // Extract unique sizes for filterSizes
+                    productDoc.filterSizes = [...new Set(sizeQuantities.map(sq => sq.size))];
+                  } catch (error) {
+                    throw new Error(`Invalid size quantities format: ${error.message}`);
+                  }
+                } else {
+                  throw new Error('Size quantities are required');
+                }
 
                 // Add uploaded images
                 const mainImage = uploadedImages.get(`main_${i + batchIndex}`);
@@ -267,27 +294,35 @@ export default function BulkUpload() {
   };
 
   const downloadSampleFile = () => {
-    // Simplified sample data
+    // Sample data with description added
     const sampleData = [
       {
         title: "Sample T-Shirt",
+        description: "Classic cotton t-shirt with comfortable fit. Perfect for everyday wear. Made with 100% organic cotton.",
         price: "29.99",
         category: "men",
         imgSrc: "https://example.com/tshirt.jpg",
-        quantity: "100",
         filterBrands: "Nike",
         filterColor: "Red, Blue, Black",
-        filterSizes: "S, M, L, XL"
+        sizeQuantities: JSON.stringify([
+          { size: "S", quantity: 10 },
+          { size: "M", quantity: 15 },
+          { size: "L", quantity: 20 }
+        ])
       },
       {
         title: "Sample Dress",
+        description: "Elegant summer dress with floral pattern. Features a flattering A-line cut and breathable fabric.",
         price: "49.99",
         category: "women",
         imgSrc: "https://example.com/dress.jpg",
-        quantity: "50",
         filterBrands: "Zara",
         filterColor: "Black, White",
-        filterSizes: "XS, S, M, L"
+        sizeQuantities: JSON.stringify([
+          { size: "XS", quantity: 5 },
+          { size: "S", quantity: 10 },
+          { size: "M", quantity: 8 }
+        ])
       }
     ];
 
@@ -298,13 +333,13 @@ export default function BulkUpload() {
       // Add column widths for better readability
       const colWidths = [
         { wch: 30 }, // title
+        { wch: 50 }, // description
         { wch: 10 }, // price
         { wch: 10 }, // category
         { wch: 50 }, // imgSrc
-        { wch: 10 }, // quantity
         { wch: 15 }, // filterBrands
         { wch: 20 }, // filterColor
-        { wch: 20 }  // filterSizes
+        { wch: 40 }  // sizeQuantities
       ];
       ws['!cols'] = colWidths;
 
