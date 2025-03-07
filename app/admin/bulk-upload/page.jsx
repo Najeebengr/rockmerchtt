@@ -148,19 +148,11 @@ export default function BulkUpload() {
                   _type: 'products',
                   title: row.title,
                   price: parseFloat(row.price),
-                  oldPrice: row.oldPrice ? parseFloat(row.oldPrice) : undefined,
                   category: row.category,
-                  isOnSale: row.isOnSale === 'true',
-                  salePercentage: row.salePercentage,
-                  inStock: row.inStock !== 'false',
-                  rating: row.rating ? parseFloat(row.rating) : undefined,
-                  reviews: row.reviews ? parseInt(row.reviews) : undefined,
-                  countdown: row.countdown ? parseInt(row.countdown) : undefined,
+                  quantity: parseInt(row.quantity),
                   filterBrands: brandReferences,
                   filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
-                  filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : [],
-                  tabFilterOptions: row.tabFilterOptions ? row.tabFilterOptions.split(',').map(item => item.trim()) : [],
-                  tabFilterOptions2: row.tabFilterOptions2 ? row.tabFilterOptions2.split(',').map(item => item.trim()) : [],
+                  filterSizes: row.filterSizes ? row.filterSizes.split(',').map(item => item.trim()) : []
                 };
 
                 // Add uploaded images
@@ -275,82 +267,48 @@ export default function BulkUpload() {
   };
 
   const downloadSampleFile = () => {
-    // Sample data with proper structure
+    // Simplified sample data
     const sampleData = [
       {
         title: "Sample T-Shirt",
         price: "29.99",
-        oldPrice: "39.99",
-        category: "men", // men, women, or children
-        imgSrc: "https://cdn.sanity.io/images/your-project-id/production/image1.jpg",
-        imgHover: "https://cdn.sanity.io/images/your-project-id/production/image1-hover.jpg",
-        isOnSale: "true",
-        salePercentage: "25%",
-        inStock: "true",
-        rating: "4.5",
-        reviews: "12",
-        countdown: "86400",
-        filterBrands: "Nike, Adidas",
-        filterColor: "Red, Blue",
-        filterSizes: "S, M, L",
-        tabFilterOptions: "New, Featured",
-        tabFilterOptions2: "Casual, Formal",
-        colors: '[{"bgColor":"red","imgSrc":"https://example.com/red-variant.jpg"},{"bgColor":"blue","imgSrc":"https://example.com/blue-variant.jpg"}]'
+        category: "men",
+        imgSrc: "https://example.com/tshirt.jpg",
+        quantity: "100",
+        filterBrands: "Nike",
+        filterColor: "Red, Blue, Black",
+        filterSizes: "S, M, L, XL"
       },
       {
         title: "Sample Dress",
         price: "49.99",
-        oldPrice: "59.99",
         category: "women",
-        imgSrc: "https://cdn.sanity.io/images/your-project-id/production/image2.jpg",
-        imgHover: "https://cdn.sanity.io/images/your-project-id/production/image2-hover.jpg",
-        isOnSale: "false",
-        inStock: "true",
-        rating: "4.8",
-        reviews: "24",
-        filterBrands: "Zara, H&M",
+        imgSrc: "https://example.com/dress.jpg",
+        quantity: "50",
+        filterBrands: "Zara",
         filterColor: "Black, White",
-        filterSizes: "XS, S, M, L",
-        tabFilterOptions: "Featured, Best Seller",
-        tabFilterOptions2: "Party, Casual",
-        colors: '[{"bgColor":"black","imgSrc":"https://example.com/black-variant.jpg"},{"bgColor":"white","imgSrc":"https://example.com/white-variant.jpg"}]'
+        filterSizes: "XS, S, M, L"
       }
     ];
 
     try {
-      // Create a new workbook
       const wb = XLSX.utils.book_new();
-      
-      // Convert JSON to worksheet
       const ws = XLSX.utils.json_to_sheet(sampleData);
 
       // Add column widths for better readability
       const colWidths = [
-        { wch: 20 }, // title
+        { wch: 30 }, // title
         { wch: 10 }, // price
-        { wch: 10 }, // oldPrice
         { wch: 10 }, // category
-        { wch: 30 }, // imgSrc
-        { wch: 30 }, // imgHover
-        { wch: 8 },  // isOnSale
-        { wch: 10 }, // salePercentage
-        { wch: 8 },  // inStock
-        { wch: 8 },  // rating
-        { wch: 8 },  // reviews
-        { wch: 10 }, // countdown
-        { wch: 20 }, // filterBrands
+        { wch: 50 }, // imgSrc
+        { wch: 10 }, // quantity
+        { wch: 15 }, // filterBrands
         { wch: 20 }, // filterColor
-        { wch: 20 }, // filterSizes
-        { wch: 25 }, // tabFilterOptions
-        { wch: 25 }, // tabFilterOptions2
-        { wch: 40 }  // colors
+        { wch: 20 }  // filterSizes
       ];
       ws['!cols'] = colWidths;
 
-      // Add the worksheet to the workbook
       XLSX.utils.book_append_sheet(wb, ws, "Products Template");
-
-      // Save the file
       XLSX.writeFile(wb, "products_upload_template.xlsx");
     } catch (error) {
       console.error("Error creating template:", error);

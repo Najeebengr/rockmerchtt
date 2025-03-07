@@ -29,134 +29,40 @@ export const productsType = {
         validation: Rule => Rule.required().positive()
       },
       {
-        name: 'oldPrice',
-        title: 'Old Price',
-        type: 'number'
-      },
-      {
         name: 'mainImage',
         title: 'Main Image',
         type: 'image',
         options: {
           hotspot: true
         },
-        fields: [
-          {
-            name: 'alt',
-            type: 'string',
-            title: 'Alternative text',
-            description: 'Important for SEO and accessibility.'
-          }
-        ]
+        validation: Rule => Rule.required()
       },
       {
-        name: 'hoverImage',
-        title: 'Hover Image',
-        type: 'image',
-        options: {
-          hotspot: true
-        },
-        fields: [
-          {
-            name: 'alt',
-            type: 'string',
-            title: 'Alternative text'
-          }
-        ]
-      },
-      {
-        name: 'isOnSale',
-        title: 'Is On Sale',
-        type: 'boolean',
-        initialValue: false
-      },
-      {
-        name: 'salePercentage',
-        title: 'Sale Percentage',
-        type: 'string'
-      },
-      {
-        name: 'inStock',
-        title: 'In Stock',
-        type: 'boolean',
-        initialValue: true
-      },
-      {
-        name: 'colors',
-        title: 'Color Variants',
-        type: 'array',
-        of: [
-          {
-            type: 'object',
-            fields: [
-              {
-                name: 'bgColor',
-                title: 'Color Class',
-                type: 'string'
-              },
-              {
-                name: 'variantImage',
-                type: 'image',
-                title: 'Variant Image',
-                options: {
-                  hotspot: true
-                }
-              },
-              {
-                name: 'imgSrc',
-                title: 'External Image URL',
-                type: 'string',
-                description: 'Optional: Use this for external image URLs'
-              }
-            ]
-          }
-        ]
+        name: 'quantity',
+        title: 'Quantity',
+        type: 'number',
+        validation: Rule => Rule.required().min(0)
       },
       {
         name: 'filterBrands',
-        title: 'Brands',
+        title: 'Brand',
         type: 'array',
-        of: [{ type: 'reference', to: [{ type: 'brand' }] }]
+        of: [{ type: 'reference', to: [{ type: 'brand' }] }],
+        validation: Rule => Rule.required().length(1)
       },
       {
         name: 'filterColor',
         title: 'Available Colors',
         type: 'array',
-        of: [{ type: 'string' }]
+        of: [{ type: 'string' }],
+        validation: Rule => Rule.required()
       },
       {
         name: 'filterSizes',
         title: 'Available Sizes',
         type: 'array',
-        of: [{ type: 'string' }]
-      },
-      {
-        name: 'tabFilterOptions',
-        title: 'Category Filters',
-        type: 'array',
-        of: [{ type: 'string' }]
-      },
-      {
-        name: 'tabFilterOptions2',
-        title: 'Additional Filters',
-        type: 'array',
-        of: [{ type: 'string' }]
-      },
-      {
-        name: 'rating',
-        title: 'Rating',
-        type: 'number',
-        validation: Rule => Rule.min(0).max(5)
-      },
-      {
-        name: 'reviews',
-        title: 'Number of Reviews',
-        type: 'number'
-      },
-      {
-        name: 'countdown',
-        title: 'Sale Countdown (in seconds)',
-        type: 'number'
+        of: [{ type: 'string' }],
+        validation: Rule => Rule.required()
       }
     ],
     preview: {
@@ -165,4 +71,4 @@ export const productsType = {
         media: 'mainImage'
       }
     }
-  }
+}
