@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
+
 export default function ProductCard1({ product, gridClass = "" }) {
   const [currentImage, setCurrentImage] = useState(product.imgSrc);
 
@@ -22,17 +23,29 @@ export default function ProductCard1({ product, gridClass = "" }) {
     setCurrentImage(product.imgSrc);
   }, [product]);
 
+  // Calculate sale price if product is on sale
+  const calculatePrice = () => {
+    if (!product.sale?.isOnSale) return product.price;
+    
+    if (product.sale.saleType === 'percentage') {
+      return product.price * (1 - product.sale.saleValue / 100);
+    }
+    return product.sale.saleValue; // fixed price
+  };
+
+  const displayPrice = calculatePrice();
+
   return (
     <div
       className={`card-product wow fadeInUp ${gridClass} ${
-        product.isOnSale ? "on-sale" : ""
-      } ${product.sizes ? "card-product-size" : ""}`}
+        product.sale?.isOnSale ? "on-sale" : ""
+      } ${product.sizeQuantities ? "card-product-size" : ""}`}
     >
       <div className="card-product-wrapper">
-        <Link href={`/product-detail/${product.id}`} className="product-img">
+        <Link href={`/product-detail/${product._id}`} className="product-img">
           <Image
             className="lazyload img-product"
-            src={currentImage}
+            src={product.imgSrc}
             alt={product.title}
             width={600}
             height={800}
@@ -40,7 +53,7 @@ export default function ProductCard1({ product, gridClass = "" }) {
 
           <Image
             className="lazyload img-hover"
-            src={product.imgHover}
+            src={product.imgHover || product.imgSrc} // Fallback to main image if no hover
             alt={product.title}
             width={600}
             height={800}
@@ -138,17 +151,19 @@ export default function ProductCard1({ product, gridClass = "" }) {
             </div>
           </div>
         )}
-        {product.isOnSale && (
+        {product.sale?.isOnSale && (
           <div className="on-sale-wrap">
-            <span className="on-sale-item">-{product.salePercentage}</span>
+            {product.sale.saleType === 'percentage' && (
+              <span className="on-sale-item">-{product.sale.saleValue}%</span>
+            )}
           </div>
         )}
-        {product.sizes && (
+        {product.sizeQuantities && (
           <div className="variant-wrap size-list">
             <ul className="variant-box">
-              {product.sizes.map((size) => (
-                <li key={size} className="size-item">
-                  {size}
+              {product.sizeQuantities.map((sizeObj) => (
+                <li key={sizeObj.size} className="size-item">
+                  {sizeObj.size}
                 </li>
               ))}
             </ul>
@@ -176,13 +191,13 @@ export default function ProductCard1({ product, gridClass = "" }) {
         )}
         <div className="list-product-btn">
           <a
-            onClick={() => addToWishlist(product.id)}
+            onClick={() => addToWishlist(product._id)}
             className="box-icon wishlist btn-icon-action"
           >
             <span className="icon icon-heart" />
             <span className="tooltip">
-              {isAddedtoWishlist(product.id)
-                ? "Already Wishlished"
+              {isAddedtoWishlist(product._id)
+                ? "Already Wishlisted"
                 : "Wishlist"}
             </span>
           </a>
@@ -190,12 +205,12 @@ export default function ProductCard1({ product, gridClass = "" }) {
             href="#compare"
             data-bs-toggle="offcanvas"
             aria-controls="compare"
-            onClick={() => addToCompareItem(product.id)}
+            onClick={() => addToCompareItem(product._id)}
             className="box-icon compare btn-icon-action"
           >
             <span className="icon icon-gitDiff" />
             <span className="tooltip">
-              {isAddedtoCompareItem(product.id)
+              {isAddedtoCompareItem(product._id)
                 ? "Already compared"
                 : "Compare"}
             </span>
@@ -213,46 +228,46 @@ export default function ProductCard1({ product, gridClass = "" }) {
         <div className="list-btn-main">
           <a
             className="btn-main-product"
-            onClick={() => addProductToCart(product.id)}
+            onClick={() => addProductToCart(product._id)}
           >
-            {isAddedToCartProducts(product.id)
+            {isAddedToCartProducts(product._id)
               ? "Already Added"
               : "ADD TO CART"}
           </a>
         </div>
       </div>
       <div className="card-product-info">
-        <Link href={`/product-detail/${product.id}`} className="title link">
+        <Link href={`/product-detail/${product._id}`} className="title link">
           {product.title}
         </Link>
         <span className="price">
-          {product.oldPrice && (
-            <span className="old-price">${product.oldPrice.toFixed(2)}</span>
+          {product.sale?.isOnSale && (
+            <span className="old-price">${product.price.toFixed(2)}</span>
           )}{" "}
-          ${product.price?.toFixed(2)}
+          ${displayPrice.toFixed(2)}
         </span>
-        {product.colors && (
+        {/* {product.filterColor && (
           <ul className="list-color-product">
-            {product.colors.map((color, index) => (
+            {product.filterColor.map((color, index) => (
               <li
                 key={index}
                 className={`list-color-item color-swatch ${
-                  currentImage == color.imgSrc ? "active" : ""
-                } ${color.bgColor == "bg-white" ? "line" : ""}`}
-                onMouseOver={() => setCurrentImage(color.imgSrc)}
+                  currentImage === product.imgSrc ? "active" : ""
+                } ${color === "white" ? "line" : ""}`}
+                onMouseOver={() => setCurrentImage(product.imgSrc)}
               >
-                <span className={`swatch-value ${color.bgColor}`} />
+                <span className={`swatch-value bg-${color}`} />
                 <Image
                   className="lazyload"
-                  src={color.imgSrc}
-                  alt="color variant"
+                  src={product.imgSrc}
+                  alt={`${color} variant`}
                   width={600}
                   height={800}
                 />
               </li>
             ))}
           </ul>
-        )}
+        )} */}
       </div>
     </div>
   );

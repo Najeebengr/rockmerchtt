@@ -13,12 +13,13 @@ export default function Collections() {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        // Fetch brands from Sanity
+        // Fetch brands with their product counts and logo
         const query = `*[_type == "brand"] {
           _id,
           name,
           "imgSrc": logo.asset->url,
-          "count": count(*[_type == "product" && references(^._id)])
+          "slug": slug.current,
+          "count": count(*[_type == "products" && references(^._id)])
         }`;
         
         const result = await client.fetch(query);
@@ -36,7 +37,7 @@ export default function Collections() {
       <div className="container">
         <div className="heading-section-2 wow fadeInUp">
           <h3>Brands you might like</h3>
-          <Link href={`/shop-brands`} className="btn-line">
+          <Link href="/brands" className="btn-line">
             View All Brands
           </Link>
         </div>
@@ -68,7 +69,7 @@ export default function Collections() {
             {brands.map((brand) => (
               <SwiperSlide key={brand._id}>
                 <div className="collection-circle hover-img">
-                  <Link href={`/shop-brands/${brand._id}`} className="img-style">
+                  <Link href={`/brands/${brand.slug}`} className="img-style">
                     <Image
                       className="lazyload"
                       src={brand.imgSrc}
@@ -79,7 +80,7 @@ export default function Collections() {
                   </Link>
                   <div className="collection-content text-center">
                     <div>
-                      <Link href={`/shop-brands/${brand._id}`} className="cls-title">
+                      <Link href={`/brands/${brand.slug}`} className="cls-title">
                         <h6 className="text">{brand.name}</h6>
                         <i className="icon icon-arrowUpRight" />
                       </Link>

@@ -1,6 +1,6 @@
 export const brandType = {
   name: 'brand',
-  title: 'Brand',
+  title: 'Brands',
   type: 'document',
   fields: [
     {
@@ -10,12 +10,27 @@ export const brandType = {
       validation: Rule => Rule.required()
     },
     {
+      name: 'slug',
+      title: 'Slug',
+      type: 'slug',
+      options: {
+        source: 'name',
+        maxLength: 96
+      },
+      validation: Rule => Rule.required()
+    },
+    {
       name: 'logo',
       title: 'Brand Logo',
       type: 'image',
       options: {
         hotspot: true
       }
+    },
+    {
+      name: 'description',
+      title: 'Description',
+      type: 'text'
     }
   ]
 }
