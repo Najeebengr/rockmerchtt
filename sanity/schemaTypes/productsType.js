@@ -35,13 +35,59 @@ export const productsType = {
         validation: Rule => Rule.required().positive()
       },
       {
-        name: 'mainImage',
-        title: 'Main Image',
-        type: 'image',
-        options: {
-          hotspot: true
-        },
-        validation: Rule => Rule.required()
+        name: 'sale',
+        title: 'Sale Settings',
+        type: 'object',
+        fields: [
+          {
+            name: 'isOnSale',
+            title: 'Is On Sale',
+            type: 'boolean',
+            initialValue: false
+          },
+          {
+            name: 'saleType',
+            title: 'Sale Type',
+            type: 'string',
+            options: {
+              list: [
+                { title: 'Percentage Off', value: 'percentage' },
+                { title: 'Fixed Price', value: 'fixed' }
+              ]
+            },
+            hidden: ({ parent }) => !parent?.isOnSale
+          },
+          {
+            name: 'saleValue',
+            title: 'Sale Value',
+            type: 'number',
+            validation: Rule => Rule.custom((value, { parent }) => {
+              if (!parent?.isOnSale) return true;
+              if (!value) return 'Sale value is required when item is on sale';
+              if (parent.saleType === 'percentage' && (value <= 0 || value > 100)) {
+                return 'Percentage must be between 0 and 100';
+              }
+              if (parent.saleType === 'fixed' && value <= 0) {
+                return 'Fixed price must be greater than 0';
+              }
+              return true;
+            }),
+            hidden: ({ parent }) => !parent?.isOnSale
+          }
+        ]
+      },
+      {
+        name: 'images',
+        title: 'Product Images',
+        type: 'array',
+        of: [
+          {
+            type: 'image',
+            options: { hotspot: true }
+          }
+        ],
+        validation: Rule => Rule.required().min(1).max(3)
+          .warning('You can only add up to 3 images')
       },
       {
         name: 'filterBrands',
@@ -85,7 +131,7 @@ export const productsType = {
       select: {
         title: 'title',
         subtitle: 'description',
-        media: 'mainImage'
+        media: 'images.0'
       }
     }
 }

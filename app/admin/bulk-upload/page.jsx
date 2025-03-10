@@ -78,11 +78,14 @@ export default function BulkUpload() {
           // Collect all images first
           const imagesToUpload = [];
           jsonData.forEach((row, rowIndex) => {
-            if (row.imgSrc) {
-              imagesToUpload.push({ url: row.imgSrc, index: `main_${rowIndex}` });
+            if (row.imgSrc1) {
+              imagesToUpload.push({ url: row.imgSrc1, index: `imgSrc1_${rowIndex}` });
             }
-            if (row.imgHover) {
-              imagesToUpload.push({ url: row.imgHover, index: `hover_${rowIndex}` });
+            if (row.imgSrc2) {
+              imagesToUpload.push({ url: row.imgSrc2, index: `imgSrc2_${rowIndex}` });
+            }
+            if (row.imgSrc3) {
+              imagesToUpload.push({ url: row.imgSrc3, index: `imgSrc3_${rowIndex}` });
             }
             if (row.colors) {
               try {
@@ -154,6 +157,30 @@ export default function BulkUpload() {
                   filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
                 };
 
+                // Handle sale information if present
+                if (row.isOnSale === 'true') {
+                  productDoc.sale = {
+                    isOnSale: true,
+                    saleType: row.saleType,
+                    saleValue: parseFloat(row.saleValue)
+                  };
+                }
+
+                // Handle multiple images
+                const images = [];
+                for (let i = 1; i <= 3; i++) {
+                  const imageKey = `imgSrc${i}`;
+                  if (row[imageKey]) {
+                    const uploadedImage = uploadedImages.get(`${imageKey}_${batchIndex}`);
+                    if (uploadedImage) {
+                      images.push(uploadedImage);
+                    }
+                  }
+                }
+                if (images.length > 0) {
+                  productDoc.images = images;
+                }
+
                 // Validate required fields
                 if (!row.description) {
                   throw new Error('Description is required');
@@ -180,35 +207,6 @@ export default function BulkUpload() {
                   }
                 } else {
                   throw new Error('Size quantities are required');
-                }
-
-                // Add uploaded images
-                const mainImage = uploadedImages.get(`main_${i + batchIndex}`);
-                const hoverImage = uploadedImages.get(`hover_${i + batchIndex}`);
-                
-                if (row.imgSrc && mainImage) {
-                  productDoc.mainImage = mainImage;
-                }
-                if (row.imgHover && hoverImage) {
-                  productDoc.hoverImage = hoverImage;
-                }
-
-                // Handle color variants
-                if (row.colors) {
-                  try {
-                    const colors = JSON.parse(row.colors);
-                    productDoc.colors = colors.map((color, colorIndex) => {
-                      const variantImage = uploadedImages.get(`color_${i + batchIndex}_${colorIndex}`);
-                      return {
-                        _key: `color${colorIndex}`,
-                        _type: 'color',
-                        bgColor: color.bgColor,
-                        variantImage: variantImage || null
-                      };
-                    });
-                  } catch (error) {
-                    console.warn('Invalid colors format:', error);
-                  }
                 }
 
                 // Create the product
@@ -294,14 +292,18 @@ export default function BulkUpload() {
   };
 
   const downloadSampleFile = () => {
-    // Sample data with description added
     const sampleData = [
       {
         title: "Sample T-Shirt",
-        description: "Classic cotton t-shirt with comfortable fit. Perfect for everyday wear. Made with 100% organic cotton.",
+        description: "Classic cotton t-shirt with comfortable fit.",
         price: "29.99",
         category: "men",
-        imgSrc: "https://example.com/tshirt.jpg",
+        imgSrc1: "https://example.com/tshirt1.jpg",
+        imgSrc2: "https://example.com/tshirt2.jpg",
+        imgSrc3: "https://example.com/tshirt3.jpg",
+        isOnSale: "true",
+        saleType: "percentage",
+        saleValue: "20",
         filterBrands: "Nike",
         filterColor: "Red, Blue, Black",
         sizeQuantities: JSON.stringify([
@@ -312,10 +314,15 @@ export default function BulkUpload() {
       },
       {
         title: "Sample Dress",
-        description: "Elegant summer dress with floral pattern. Features a flattering A-line cut and breathable fabric.",
+        description: "Elegant summer dress with floral pattern.",
         price: "49.99",
         category: "women",
-        imgSrc: "https://example.com/dress.jpg",
+        imgSrc1: "https://example.com/dress1.jpg",
+        imgSrc2: "https://example.com/dress2.jpg",
+        imgSrc3: "",  // Optional third image
+        isOnSale: "true",
+        saleType: "fixed",
+        saleValue: "39.99",
         filterBrands: "Zara",
         filterColor: "Black, White",
         sizeQuantities: JSON.stringify([
@@ -330,13 +337,17 @@ export default function BulkUpload() {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(sampleData);
 
-      // Add column widths for better readability
       const colWidths = [
         { wch: 30 }, // title
         { wch: 50 }, // description
         { wch: 10 }, // price
         { wch: 10 }, // category
-        { wch: 50 }, // imgSrc
+        { wch: 50 }, // imgSrc1
+        { wch: 50 }, // imgSrc2
+        { wch: 50 }, // imgSrc3
+        { wch: 10 }, // isOnSale
+        { wch: 15 }, // saleType
+        { wch: 10 }, // saleValue
         { wch: 15 }, // filterBrands
         { wch: 20 }, // filterColor
         { wch: 40 }  // sizeQuantities
