@@ -78,14 +78,14 @@ export default function BulkUpload() {
           // Collect all images first
           const imagesToUpload = [];
           jsonData.forEach((row, rowIndex) => {
-            if (row.imgSrc1) {
-              imagesToUpload.push({ url: row.imgSrc1, index: `imgSrc1_${rowIndex}` });
+            if (row.mainImage) {
+              imagesToUpload.push({ url: row.mainImage, index: `main_${rowIndex}` });
             }
-            if (row.imgSrc2) {
-              imagesToUpload.push({ url: row.imgSrc2, index: `imgSrc2_${rowIndex}` });
+            if (row.image2) {
+              imagesToUpload.push({ url: row.image2, index: `image2_${rowIndex}` });
             }
-            if (row.imgSrc3) {
-              imagesToUpload.push({ url: row.imgSrc3, index: `imgSrc3_${rowIndex}` });
+            if (row.image3) {
+              imagesToUpload.push({ url: row.image3, index: `image3_${rowIndex}` });
             }
             if (row.colors) {
               try {
@@ -157,6 +157,24 @@ export default function BulkUpload() {
                   filterColor: row.filterColor ? row.filterColor.split(',').map(item => item.trim()) : [],
                 };
 
+                // Handle main image (required)
+                const mainImage = uploadedImages.get(`main_${i + batchIndex}`);
+                if (!mainImage) {
+                  throw new Error('Main image is required');
+                }
+                productDoc.mainImage = mainImage;
+
+                // Handle optional additional images
+                const image2 = uploadedImages.get(`image2_${i + batchIndex}`);
+                if (row.image2 && image2) {
+                  productDoc.image2 = image2;
+                }
+
+                const image3 = uploadedImages.get(`image3_${i + batchIndex}`);
+                if (row.image3 && image3) {
+                  productDoc.image3 = image3;
+                }
+
                 // Handle sale information if present
                 if (row.isOnSale === 'true') {
                   productDoc.sale = {
@@ -164,21 +182,6 @@ export default function BulkUpload() {
                     saleType: row.saleType,
                     saleValue: parseFloat(row.saleValue)
                   };
-                }
-
-                // Handle multiple images
-                const images = [];
-                for (let i = 1; i <= 3; i++) {
-                  const imageKey = `imgSrc${i}`;
-                  if (row[imageKey]) {
-                    const uploadedImage = uploadedImages.get(`${imageKey}_${batchIndex}`);
-                    if (uploadedImage) {
-                      images.push(uploadedImage);
-                    }
-                  }
-                }
-                if (images.length > 0) {
-                  productDoc.images = images;
                 }
 
                 // Validate required fields
@@ -298,9 +301,9 @@ export default function BulkUpload() {
         description: "Classic cotton t-shirt with comfortable fit.",
         price: "29.99",
         category: "men",
-        imgSrc1: "https://example.com/tshirt1.jpg",
-        imgSrc2: "https://example.com/tshirt2.jpg",
-        imgSrc3: "https://example.com/tshirt3.jpg",
+        mainImage: "https://example.com/tshirt-main.jpg",
+        image2: "https://example.com/tshirt-2.jpg",
+        image3: "https://example.com/tshirt-3.jpg",
         isOnSale: "true",
         saleType: "percentage",
         saleValue: "20",
@@ -317,9 +320,9 @@ export default function BulkUpload() {
         description: "Elegant summer dress with floral pattern.",
         price: "49.99",
         category: "women",
-        imgSrc1: "https://example.com/dress1.jpg",
-        imgSrc2: "https://example.com/dress2.jpg",
-        imgSrc3: "",  // Optional third image
+        mainImage: "https://example.com/dress-main.jpg",
+        image2: "https://example.com/dress-2.jpg",
+        image3: "",
         isOnSale: "true",
         saleType: "fixed",
         saleValue: "39.99",
@@ -342,9 +345,9 @@ export default function BulkUpload() {
         { wch: 50 }, // description
         { wch: 10 }, // price
         { wch: 10 }, // category
-        { wch: 50 }, // imgSrc1
-        { wch: 50 }, // imgSrc2
-        { wch: 50 }, // imgSrc3
+        { wch: 50 }, // mainImage
+        { wch: 50 }, // image2
+        { wch: 50 }, // image3
         { wch: 10 }, // isOnSale
         { wch: 15 }, // saleType
         { wch: 10 }, // saleValue

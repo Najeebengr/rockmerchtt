@@ -35,6 +35,25 @@ export const productsType = {
         validation: Rule => Rule.required().positive()
       },
       {
+        name: 'mainImage',
+        title: 'Main Product Image',
+        type: 'image',
+        options: { hotspot: true },
+        validation: Rule => Rule.required()
+      },
+      {
+        name: 'image2',
+        title: 'Additional Image 1',
+        type: 'image',
+        options: { hotspot: true }
+      },
+      {
+        name: 'image3',
+        title: 'Additional Image 2',
+        type: 'image',
+        options: { hotspot: true }
+      },
+      {
         name: 'sale',
         title: 'Sale Settings',
         type: 'object',
@@ -75,19 +94,6 @@ export const productsType = {
             hidden: ({ parent }) => !parent?.isOnSale
           }
         ]
-      },
-      {
-        name: 'images',
-        title: 'Product Images',
-        type: 'array',
-        of: [
-          {
-            type: 'image',
-            options: { hotspot: true }
-          }
-        ],
-        validation: Rule => Rule.required().min(1).max(3)
-          .warning('You can only add up to 3 images')
       },
       {
         name: 'filterBrands',
@@ -131,7 +137,7 @@ export const productsType = {
       select: {
         title: 'title',
         subtitle: 'description',
-        media: 'images.0'
+        media: 'mainImage'
       }
     }
 }
